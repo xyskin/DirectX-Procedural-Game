@@ -12,6 +12,8 @@
 #include <d3dx10math.h>
 #include <stdio.h>
 #include <random>
+#include <time.h>
+#include <stdlib.h>
 using namespace std;
 
 ///////////////////////

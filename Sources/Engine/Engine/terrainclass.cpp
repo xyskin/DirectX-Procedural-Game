@@ -975,17 +975,29 @@ bool TerrainClass::InitializeTerrain()
 			m_heightMap[index].z = (float)j;
 
 			if (i == 0 && j == 0)
+			{
+				//srand((unsigned)time(NULL));
 				m_heightMap[index].y = rand() % 101;
-			//m_heightMap[index].y = u(e);
+				//m_heightMap[index].y = u(e);
+			}
 			if (i == 0 && j == 511)
+			{
+				//srand((unsigned)time(NULL));
 				m_heightMap[index].y = rand() % 101;
-			//m_heightMap[index].y = u(e);
-			if (i == 511 && j == 511)
+				//m_heightMap[index].y = u(e);
+			}
+			if (i == 511 && j == 511) 
+			{
+				//srand((unsigned)time(NULL));
 				m_heightMap[index].y = rand() % 101;
-			//m_heightMap[index].y = u(e);
+				//m_heightMap[index].y = u(e);
+			}
 			if (i == 511 && j == 0)
+			{
+				//srand((unsigned)time(NULL));
 				m_heightMap[index].y = rand() % 101;
-			//m_heightMap[index].y = u(e);
+				//m_heightMap[index].y = u(e);
+			}
 			k += 3;
 		}
 	}
