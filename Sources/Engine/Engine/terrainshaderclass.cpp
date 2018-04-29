@@ -66,7 +66,7 @@ bool TerrainShaderClass::Render(ID3D11DeviceContext* deviceContext, int indexCou
 	}
 
 	// Now render the prepared buffers with the shader.
-	RenderShader(deviceContext, indexCount);
+	//RenderShader(deviceContext, indexCount);
 
 	return true;
 }

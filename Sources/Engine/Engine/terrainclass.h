@@ -113,6 +113,8 @@ private:
 	TextureClass *m_ColorTexture, *m_NormalTexture;
 	//int m_vertexCount;
 	VertexType* m_vertices;
+
+	float spread;
 };
 
 #endif

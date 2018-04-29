@@ -12,6 +12,7 @@ TerrainClass::TerrainClass()
 	m_indexBuffer = 0;
 	m_ColorTexture = 0;
 	m_NormalTexture = 0;
+	spread = 100;
 }
 
 
@@ -1006,6 +1007,7 @@ bool TerrainClass::InitializeTerrain()
 
 void TerrainClass::MidPointCalculate(int xmin, int xmax, int zmin, int zmax)
 {
+	spread *= 0.5f;
 	//int line = xmax - xmin + 1;
 	if (!(xmax - xmin <= 1 && zmax - zmin <= 1))
 	{
@@ -1021,16 +1023,23 @@ void TerrainClass::MidPointCalculate(int xmin, int xmax, int zmin, int zmax)
 		m_heightMap[(zmin + zmax - 1) * 512 / 2 + xmax].y = (m_heightMap[zmin * 512 + xmax].y + m_heightMap[zmax * 512 + xmax].y) / 2;
 		m_heightMap[(zmin + zmax + 1) * 512 / 2 + xmax].y = (m_heightMap[zmin * 512 + xmax].y + m_heightMap[zmax * 512 + xmax].y) / 2;
 
-		m_heightMap[(zmin + zmax - 1) * 512 / 2 + (xmin + xmax - 1) / 2].y = (m_heightMap[zmin * 512 + xmin].y + m_heightMap[zmin * 512 + xmax].y + m_heightMap[zmax * 512 + xmin].y + m_heightMap[zmax * 512 + xmax].y) / 4;
-		m_heightMap[(zmin + zmax + 1) * 512 / 2 + (xmin + xmax - 1) / 2].y = (m_heightMap[zmin * 512 + xmin].y + m_heightMap[zmin * 512 + xmax].y + m_heightMap[zmax * 512 + xmin].y + m_heightMap[zmax * 512 + xmax].y) / 4;
-		m_heightMap[(zmin + zmax - 1) * 512 / 2 + (xmin + xmax + 1) / 2].y = (m_heightMap[zmin * 512 + xmin].y + m_heightMap[zmin * 512 + xmax].y + m_heightMap[zmax * 512 + xmin].y + m_heightMap[zmax * 512 + xmax].y) / 4;
-		m_heightMap[(zmin + zmax + 1) * 512 / 2 + (xmin + xmax + 1) / 2].y = (m_heightMap[zmin * 512 + xmin].y + m_heightMap[zmin * 512 + xmax].y + m_heightMap[zmax * 512 + xmin].y + m_heightMap[zmax * 512 + xmax].y) / 4;
+		m_heightMap[(zmin + zmax - 1) * 512 / 2 + (xmin + xmax - 1) / 2].y = (m_heightMap[zmin * 512 + xmin].y + m_heightMap[zmin * 512 + xmax].y + m_heightMap[zmax * 512 + xmin].y + m_heightMap[zmax * 512 + xmax].y) / 4 + spread;
+		m_heightMap[(zmin + zmax + 1) * 512 / 2 + (xmin + xmax - 1) / 2].y = (m_heightMap[zmin * 512 + xmin].y + m_heightMap[zmin * 512 + xmax].y + m_heightMap[zmax * 512 + xmin].y + m_heightMap[zmax * 512 + xmax].y) / 4 + spread;
+		m_heightMap[(zmin + zmax - 1) * 512 / 2 + (xmin + xmax + 1) / 2].y = (m_heightMap[zmin * 512 + xmin].y + m_heightMap[zmin * 512 + xmax].y + m_heightMap[zmax * 512 + xmin].y + m_heightMap[zmax * 512 + xmax].y) / 4 + spread;
+		m_heightMap[(zmin + zmax + 1) * 512 / 2 + (xmin + xmax + 1) / 2].y = (m_heightMap[zmin * 512 + xmin].y + m_heightMap[zmin * 512 + xmax].y + m_heightMap[zmax * 512 + xmin].y + m_heightMap[zmax * 512 + xmax].y) / 4 + spread;
 
+		
+		
 		MidPointCalculate(xmin, (xmin + xmax - 1) / 2, zmin, (zmin + zmax - 1) / 2);
+		//spread *= 2;
 		MidPointCalculate((xmin + xmax + 1) / 2, xmax, zmin, (zmin + zmax - 1) / 2);
+		//spread *= 2;
 		MidPointCalculate((xmin + xmax + 1) / 2, xmax, (zmin + zmax + 1) / 2, zmax);
+		//spread *= 2;
 		MidPointCalculate(xmin, (xmin + xmax - 1) / 2, (zmin + zmax + 1) / 2, zmax);
+		
 	}
+	spread *= 2.0f;
 	return;
 }
 
