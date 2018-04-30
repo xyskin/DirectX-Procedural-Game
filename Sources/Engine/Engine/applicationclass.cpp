@@ -1305,20 +1305,11 @@ bool ApplicationClass::RenderMainMenu()
 	// Check if the left mouse button has been pressed.
 	if (m_Input->IsLeftMouseButtonDown())
 	{
-		// If they have clicked on the screen with the mouse then perform an intersection test.
-		if (m_check == false)
-		{
-			m_check = true;
-			m_Input->GetMouseLocation(mouseX, mouseY);
-			TestIntersection(mouseX, mouseY);
-		}
+		m_Input->GetMouseLocation(mouseX, mouseY);
+		TestIntersection(mouseX, mouseY);
+	
 	}
 
-	// Check if the left mouse button has been released.
-	if (!m_Input->IsLeftMouseButtonDown())
-	{
-		m_check = false;
-	}
 	m_Direct3D->GetWorldMatrix(worldMatrix);
 	static float delta = 0;
 	delta += 0.01f;
