@@ -108,6 +108,15 @@
     <ClCompile Include="terrainclass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="skyplaneclass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="skyplaneshaderclass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bleedshaderclass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="applicationclass.h">
@@ -200,6 +209,15 @@
     <ClInclude Include="terrainclass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="skyplaneclass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="skyplaneshaderclass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bleedshaderclass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="font.ps">
@@ -248,6 +266,18 @@
       <Filter>Shader Files</Filter>
     </None>
     <None Include="water.vs">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="skyplane.ps">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="skyplane.vs">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="Bleed.ps">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="Bleed.vs">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>

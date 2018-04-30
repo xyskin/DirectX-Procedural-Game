@@ -39,12 +39,19 @@ ApplicationClass::ApplicationClass()
 	m_MainMenuObject = 0;
 	m_skydome = 0;
 	m_skydomeshader = 0;
+	m_SkyPlane = 0;
+	m_SkyPlaneShader = 0;
 
 	m_RefractionTexture = 0;
 	m_ReflectionTexture = 0;
 	m_ReflectionShader = 0;
 	m_Water = 0;
 	m_WaterShader = 0;
+
+	m_BleedObj = 0;
+	m_Bleed = 0;
+	m_bleedshader = 0;
+	bleed = true;
 }
 
 
@@ -429,6 +436,36 @@ bool ApplicationClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidt
 		return false;
 	}
 
+	// Create the sky plane object.
+	m_SkyPlane = new SkyPlaneClass;
+	if (!m_SkyPlane)
+	{
+		return false;
+	}
+
+	// Initialize the sky plane object.
+	result = m_SkyPlane->Initialize(m_Direct3D->GetDevice(), L"../Engine/data/cloud001.dds", L"../Engine/data/cloud002.dds");
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the sky plane object.", L"Error", MB_OK);
+		return false;
+	}
+
+	// Create the sky plane shader object.
+	m_SkyPlaneShader = new SkyPlaneShaderClass;
+	if (!m_SkyPlaneShader)
+	{
+		return false;
+	}
+
+	// Initialize the sky plane shader object.
+	result = m_SkyPlaneShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the sky plane shader object.", L"Error", MB_OK);
+		return false;
+	}
+
 	// Create the refraction render to texture object.
 	m_RefractionTexture = new RenderTextureClass;
 	if (!m_RefractionTexture)
@@ -503,6 +540,43 @@ bool ApplicationClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidt
 		MessageBox(hwnd, L"Could not initialize the water shader object.", L"Error", MB_OK);
 		return false;
 	}
+
+	m_Bleed = new RenderTextureClass;
+	if (!m_Bleed)
+	{
+		return false;
+	}
+
+	result = m_Bleed->Initialize(m_Direct3D->GetDevice(), screenWidth, screenHeight, SCREEN_DEPTH, SCREEN_NEAR);
+	if (!result)
+	{
+		return false;
+	}
+
+	m_BleedObj = new BitmapClass;
+	if (!m_BleedObj)
+	{
+		return false;
+	}
+
+	result = m_BleedObj->Initialize(m_Direct3D->GetDevice(), screenWidth, screenHeight, L"../Engine/data/waternormal.dds", screenWidth, screenHeight);
+	if (!result)
+	{
+		return false;
+	}
+
+	m_bleedshader = new BleedShaderClass;
+	if (!m_bleedshader)
+	{
+		return false;
+	}
+
+	result = m_bleedshader->Initialize(m_Direct3D->GetDevice(), hwnd);
+	if (!result)
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -697,6 +771,23 @@ void ApplicationClass::Shutdown()
 		delete m_skydomeshader;
 		m_skydomeshader = 0;
 	}
+
+	// Release the sky plane shader object.
+	if (m_SkyPlaneShader)
+	{
+		m_SkyPlaneShader->Shutdown();
+		delete m_SkyPlaneShader;
+		m_SkyPlaneShader = 0;
+	}
+
+	// Release the sky plane object.
+	if (m_SkyPlane)
+	{
+		m_SkyPlane->Shutdown();
+		delete m_SkyPlane;
+		m_SkyPlane = 0;
+	}
+
 	// Release the water shader object.
 	if (m_WaterShader)
 	{
@@ -779,6 +870,9 @@ bool ApplicationClass::Frame()
 
 	// Do the water frame processing.
 	m_Water->Frame();
+
+	// Do the sky plane frame processing.
+	m_SkyPlane->Frame();
 
 
 	// Render the graphics.
@@ -906,6 +1000,8 @@ bool ApplicationClass::RenderGraphics()
 	m_Camera->GetViewMatrix(viewMatrix);
 	m_Direct3D->GetProjectionMatrix(projectionMatrix);
 	m_Direct3D->GetOrthoMatrix(orthoMatrix);
+	m_Camera->GetReflectionViewMatrix(reflectionViewMatrix);
+
 
 	if (!m_start) {
 
@@ -915,108 +1011,150 @@ bool ApplicationClass::RenderGraphics()
 			return false;
 		}
 	}
-	else
-	{
+	else {
 
-		// Render the refraction of the scene to a texture.
-		RenderRefractionToTexture();
+		RenderSceneToTexture(worldMatrix, viewMatrix, projectionMatrix, reflectionViewMatrix);
 
-		// Render the reflection of the scene to a texture.
-		RenderReflectionToTexture();
-
-
-		// Do the frame input processing.
-		result = HandleInput(m_Timer->GetTime());
-
-		m_Direct3D->GetWorldMatrix(worldMatrix);
-		// Translate the sky dome to be centered around the camera position.
-		D3DXMatrixTranslation(&worldMatrix, cameraPosition.x, cameraPosition.y, cameraPosition.z);
-
-		// Turn off back face culling.
-		m_Direct3D->TurnOffCulling();
-
-		// Turn off the Z buffer.
-		m_Direct3D->TurnZBufferOff();
-
-		// Render the sky dome using the sky dome shader.
-		m_skydome->Render(m_Direct3D->GetDeviceContext());
-		m_skydomeshader->Render(m_Direct3D->GetDeviceContext(), m_skydome->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
-			m_skydome->GetApexColor(), m_skydome->GetCenterColor());
-
-		// Turn back face culling back on.
-		m_Direct3D->TurnOnCulling();
-
-		// Turn the Z buffer back on.
-		m_Direct3D->TurnZBufferOn();
-		if (!result)
+		if (!bleed)
 		{
-			return false;
+
+			// Render the refraction of the scene to a texture.
+			RenderRefractionToTexture();
+
+			// Render the reflection of the scene to a texture.
+			RenderReflectionToTexture(viewMatrix);
+
+
+			// Do the frame input processing.
+			result = HandleInput(m_Timer->GetTime());
+
+			m_Direct3D->GetWorldMatrix(worldMatrix);
+			// Translate the sky dome to be centered around the camera position.
+			D3DXMatrixTranslation(&worldMatrix, cameraPosition.x, cameraPosition.y, cameraPosition.z);
+
+			// Turn off back face culling.
+			m_Direct3D->TurnOffCulling();
+
+			// Turn off the Z buffer.
+			m_Direct3D->TurnZBufferOff();
+
+			// Render the sky dome using the sky dome shader.
+			m_skydome->Render(m_Direct3D->GetDeviceContext());
+			m_skydomeshader->Render(m_Direct3D->GetDeviceContext(), m_skydome->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+				m_skydome->GetApexColor(), m_skydome->GetCenterColor());
+
+			// Turn back face culling back on.
+			m_Direct3D->TurnOnCulling();
+
+			// Enable additive blending so the clouds blend with the sky dome color.
+			m_Direct3D->EnableSecondBlendState();
+
+			// Render the sky plane using the sky plane shader.
+			m_SkyPlane->Render(m_Direct3D->GetDeviceContext());
+			m_SkyPlaneShader->Render(m_Direct3D->GetDeviceContext(), m_SkyPlane->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+				m_SkyPlane->GetCloudTexture1(), m_SkyPlane->GetCloudTexture2(), m_SkyPlane->GetTranslation(0), m_SkyPlane->GetTranslation(1),
+				m_SkyPlane->GetTranslation(2), m_SkyPlane->GetTranslation(3), m_SkyPlane->GetBrightness());
+
+			// Turn off blending.
+			m_Direct3D->TurnOffAlphaBlending();
+
+			// Turn the Z buffer back on.
+			m_Direct3D->TurnZBufferOn();
+			if (!result)
+			{
+				return false;
+			}
+
+			m_Direct3D->GetWorldMatrix(worldMatrix);
+
+			D3DXMatrixTranslation(&worldMatrix, 256, m_Water->GetWaterHeight(), 256);
+			m_Water->Render(m_Direct3D->GetDeviceContext());
+			m_WaterShader->Render(m_Direct3D->GetDeviceContext(), m_Water->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, reflectionViewMatrix,
+				m_RefractionTexture->GetShaderResourceView(), m_ReflectionTexture->GetShaderResourceView(), m_Water->GetTexture(),
+				m_Camera->GetPosition(), m_Water->GetNormalMapTiling(), m_Water->GetWaterTranslation(), m_Water->GetReflectRefractScale(),
+				m_Water->GetRefractionTint(), m_Light->GetDirection(), m_Water->GetSpecularShininess());
+
+			m_Direct3D->GetWorldMatrix(worldMatrix);
+
+			if (m_renderMesh)
+			{
+				m_Direct3D->EnableWireframe();
+			}
+
+			// Construct the frustum.
+			m_Frustum->ConstructFrustum(SCREEN_DEPTH, projectionMatrix, viewMatrix);
+
+			// Set the terrain shader parameters that it will use for rendering.
+			result = m_TerrainShader->Render(m_Direct3D->GetDeviceContext(), m_Terrain->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+				m_Terrain->GetColorTexture(), m_Terrain->GetNormalTexture(), m_Light->GetDiffuseColor(), m_Light->GetDirection(),
+				2.0f);
+			if (!result)
+			{
+				return false;
+			}
+
+
+			// Render the terrain using the quad tree and terrain shader.
+			m_QuadTree->Render(m_Frustum, m_Direct3D->GetDeviceContext(), m_TerrainShader, m_ColorShader, m_renderLine);
+
+			// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
+			m_Vehicle->Render(m_Direct3D->GetDeviceContext());
+
+			CalculateVehicleWorldMatrix(vehicleMatrix);
+
+			// Render the model using the light shader.
+			result = m_LightShader->Render(m_Direct3D->GetDeviceContext(), m_Vehicle->GetIndexCount(), vehicleMatrix, viewMatrix, projectionMatrix,
+				m_Light->GetDirection(), m_Light->GetDiffuseColor(), m_Light->GetAmbientColor(), m_Vehicle->GetTexture());
+			if (!result)
+			{
+				return false;
+			}
+
+			if (m_renderMesh)
+			{
+				m_Direct3D->DisableWireframe();
+			}
+
+			result = m_ColorShader->SetShaderParameters(m_Direct3D->GetDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
+			if (!result)
+			{
+				return false;
+			}
+
+			// Set the number of rendered terrain triangles since some were culled.
+			result = m_Text->SetRenderCount(m_QuadTree->GetDrawCount(), m_Direct3D->GetDeviceContext());
+			if (!result)
+			{
+				return false;
+			}
+
 		}
 
-		m_Direct3D->GetWorldMatrix(worldMatrix);
-		m_Camera->GetReflectionViewMatrix(reflectionViewMatrix);
-
-		D3DXMatrixTranslation(&worldMatrix, 256, m_Water->GetWaterHeight(), 256);
-		m_Water->Render(m_Direct3D->GetDeviceContext());
-		m_WaterShader->Render(m_Direct3D->GetDeviceContext(), m_Water->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, reflectionViewMatrix,
-			m_RefractionTexture->GetShaderResourceView(), m_ReflectionTexture->GetShaderResourceView(), m_Water->GetTexture(),
-			m_Camera->GetPosition(), m_Water->GetNormalMapTiling(), m_Water->GetWaterTranslation(), m_Water->GetReflectRefractScale(),
-			m_Water->GetRefractionTint(), m_Light->GetDirection(), m_Water->GetSpecularShininess());
-
-		m_Direct3D->GetWorldMatrix(worldMatrix);
-
-		if (m_renderMesh)
+		else if (bleed)
 		{
-			m_Direct3D->EnableWireframe();
+			// Turn on the alpha blending before rendering the text.
+			m_Direct3D->TurnOnAlphaBlending();
+
+			// Render the mouse cursor with the texture shader.
+			result = m_BleedObj->Render(m_Direct3D->GetDeviceContext(), 0, 0);
+			if (!result)
+			{
+				return false;
+			}
+
+			result = m_bleedshader->Render(m_Direct3D->GetDeviceContext(), m_BleedObj->GetIndexCount(),
+				worldMatrix, baseViewMatrix, orthoMatrix, m_Bleed->GetShaderResourceView());
+			if (!result)
+			{
+				return false;
+			}
+
+			// Turn off alpha blending after rendering the text.
+			m_Direct3D->TurnOffAlphaBlending();
+
+			// Turn the Z buffer back on now that all 2D rendering has completed.
+			m_Direct3D->TurnZBufferOn();
 		}
-
-		// Construct the frustum.
-		m_Frustum->ConstructFrustum(SCREEN_DEPTH, projectionMatrix, viewMatrix);
-
-		// Set the terrain shader parameters that it will use for rendering.
-		result = m_TerrainShader->Render(m_Direct3D->GetDeviceContext(), m_Terrain->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
-			m_Terrain->GetColorTexture(), m_Terrain->GetNormalTexture(), m_Light->GetDiffuseColor(), m_Light->GetDirection(),
-			2.0f);
-		if (!result)
-		{
-			return false;
-		}
-
-
-		// Render the terrain using the quad tree and terrain shader.
-		m_QuadTree->Render(m_Frustum, m_Direct3D->GetDeviceContext(), m_TerrainShader, m_ColorShader, m_renderLine);
-
-		// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
-		m_Vehicle->Render(m_Direct3D->GetDeviceContext());
-
-		CalculateVehicleWorldMatrix(vehicleMatrix);
-
-		// Render the model using the light shader.
-		result = m_LightShader->Render(m_Direct3D->GetDeviceContext(), m_Vehicle->GetIndexCount(), vehicleMatrix, viewMatrix, projectionMatrix,
-			m_Light->GetDirection(), m_Light->GetDiffuseColor(), m_Light->GetAmbientColor(), m_Vehicle->GetTexture());
-		if (!result)
-		{
-			return false;
-		}
-
-		if (m_renderMesh)
-		{
-			m_Direct3D->DisableWireframe();
-		}
-
-		result = m_ColorShader->SetShaderParameters(m_Direct3D->GetDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
-		if (!result)
-		{
-			return false;
-		}
-
-		// Set the number of rendered terrain triangles since some were culled.
-		result = m_Text->SetRenderCount(m_QuadTree->GetDrawCount(), m_Direct3D->GetDeviceContext());
-		if (!result)
-		{
-			return false;
-		}
-
 	}
 
 	if (m_renderUI) {
@@ -1346,7 +1484,7 @@ void ApplicationClass::RenderRefractionToTexture()
 	return;
 }
 
-void ApplicationClass::RenderReflectionToTexture()
+void ApplicationClass::RenderReflectionToTexture(D3DXMATRIX viewMatrix)
 {
 	D3DXVECTOR4 clipPlane;
 	D3DXMATRIX reflectionViewMatrix, worldMatrix, projectionMatrix;
@@ -1394,16 +1532,15 @@ void ApplicationClass::RenderReflectionToTexture()
 	m_Direct3D->TurnOnCulling();
 
 	// Enable additive blending so the clouds blend with the sky dome color.
-	//m_Direct3D->EnableSecondBlendState();
-	//
-	// Render the sky plane using the sky plane shader.
-	//m_SkyPlane->Render(m_Direct3D->GetDeviceContext());
-	//m_SkyPlaneShader->Render(m_Direct3D->GetDeviceContext(), m_SkyPlane->GetIndexCount(), worldMatrix, reflectionViewMatrix, projectionMatrix,
-	//	m_SkyPlane->GetCloudTexture(), m_SkyPlane->GetPerturbTexture(), m_SkyPlane->GetTranslation(), m_SkyPlane->GetScale(),
-	//	m_SkyPlane->GetBrightness());
+	m_Direct3D->EnableSecondBlendState();
+	
+	m_SkyPlane->Render(m_Direct3D->GetDeviceContext());
+	m_SkyPlaneShader->Render(m_Direct3D->GetDeviceContext(), m_SkyPlane->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+			m_SkyPlane->GetCloudTexture1(), m_SkyPlane->GetCloudTexture2(), m_SkyPlane->GetTranslation(0), m_SkyPlane->GetTranslation(1),
+			m_SkyPlane->GetTranslation(2), m_SkyPlane->GetTranslation(3), m_SkyPlane->GetBrightness());
 
-	// Turn off blending and enable the Z buffer again.
-	//m_Direct3D->TurnOffAlphaBlending();
+	
+	m_Direct3D->TurnOffAlphaBlending();
 	m_Direct3D->TurnZBufferOn();
 
 	// Reset the world matrix.
@@ -1414,6 +1551,102 @@ void ApplicationClass::RenderReflectionToTexture()
 	m_ReflectionShader->Render(m_Direct3D->GetDeviceContext(), m_Terrain->GetIndexCount(), worldMatrix, reflectionViewMatrix, projectionMatrix,
 		m_Terrain->GetColorTexture(), m_Terrain->GetNormalTexture(), m_Light->GetDiffuseColor(), m_Light->GetDirection(), 2.0f,
 		clipPlane);
+
+	// Reset the render target back to the original back buffer and not the render to texture anymore.
+	m_Direct3D->SetBackBufferRenderTarget();
+
+	// Reset the viewport back to the original.
+	m_Direct3D->ResetViewport();
+
+	return;
+}
+
+void ApplicationClass::RenderSceneToTexture(D3DXMATRIX worldMatrix,D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix,D3DXMATRIX reflectionViewMatrix)
+{
+	D3DXMATRIX vehicleMatrix;
+	D3DXVECTOR3 cameraPosition;
+	bool result;
+
+	// Set the render target to be the reflection render to texture.
+	m_Bleed->SetRenderTarget(m_Direct3D->GetDeviceContext());
+
+	// Clear the reflection render to texture.
+	m_Bleed->ClearRenderTarget(m_Direct3D->GetDeviceContext(), 0.0f, 0.0f, 0.0f, 1.0f);
+
+	m_Direct3D->GetWorldMatrix(worldMatrix);
+	// Translate the sky dome to be centered around the camera position.
+	D3DXMatrixTranslation(&worldMatrix, cameraPosition.x, cameraPosition.y, cameraPosition.z);
+
+	// Turn off back face culling.
+	m_Direct3D->TurnOffCulling();
+
+	// Turn off the Z buffer.
+	m_Direct3D->TurnZBufferOff();
+
+	// Render the sky dome using the sky dome shader.
+	m_skydome->Render(m_Direct3D->GetDeviceContext());
+	m_skydomeshader->Render(m_Direct3D->GetDeviceContext(), m_skydome->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+		m_skydome->GetApexColor(), m_skydome->GetCenterColor());
+
+	// Turn back face culling back on.
+	m_Direct3D->TurnOnCulling();
+
+	// Enable additive blending so the clouds blend with the sky dome color.
+	m_Direct3D->EnableSecondBlendState();
+
+	// Render the sky plane using the sky plane shader.
+	m_SkyPlane->Render(m_Direct3D->GetDeviceContext());
+	m_SkyPlaneShader->Render(m_Direct3D->GetDeviceContext(), m_SkyPlane->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+		m_SkyPlane->GetCloudTexture1(), m_SkyPlane->GetCloudTexture2(), m_SkyPlane->GetTranslation(0), m_SkyPlane->GetTranslation(1),
+		m_SkyPlane->GetTranslation(2), m_SkyPlane->GetTranslation(3), m_SkyPlane->GetBrightness());
+
+	// Turn off blending.
+	m_Direct3D->TurnOffAlphaBlending();
+
+	// Turn the Z buffer back on.
+	m_Direct3D->TurnZBufferOn();
+
+	m_Direct3D->GetWorldMatrix(worldMatrix);
+
+	if (m_renderMesh)
+	{
+		m_Direct3D->EnableWireframe();
+	}
+
+	// Construct the frustum.
+	m_Frustum->ConstructFrustum(SCREEN_DEPTH, projectionMatrix, viewMatrix);
+
+	// Set the terrain shader parameters that it will use for rendering.
+	result = m_TerrainShader->Render(m_Direct3D->GetDeviceContext(), m_Terrain->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+		m_Terrain->GetColorTexture(), m_Terrain->GetNormalTexture(), m_Light->GetDiffuseColor(), m_Light->GetDirection(),
+		2.0f);
+	if (!result)
+	{
+		return;
+	}
+
+
+	// Render the terrain using the quad tree and terrain shader.
+	m_QuadTree->Render(m_Frustum, m_Direct3D->GetDeviceContext(), m_TerrainShader, m_ColorShader, m_renderLine);
+
+	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	m_Vehicle->Render(m_Direct3D->GetDeviceContext());
+
+	CalculateVehicleWorldMatrix(vehicleMatrix);
+
+	// Render the model using the light shader.
+	result = m_LightShader->Render(m_Direct3D->GetDeviceContext(), m_Vehicle->GetIndexCount(), vehicleMatrix, viewMatrix, projectionMatrix,
+		m_Light->GetDirection(), m_Light->GetDiffuseColor(), m_Light->GetAmbientColor(), m_Vehicle->GetTexture());
+	if (!result)
+	{
+		return;
+	}
+
+	if (m_renderMesh)
+	{
+		m_Direct3D->DisableWireframe();
+	}
+
 
 	// Reset the render target back to the original back buffer and not the render to texture anymore.
 	m_Direct3D->SetBackBufferRenderTarget();

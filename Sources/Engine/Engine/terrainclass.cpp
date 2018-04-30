@@ -12,7 +12,7 @@ TerrainClass::TerrainClass()
 	m_indexBuffer = 0;
 	m_ColorTexture = 0;
 	m_NormalTexture = 0;
-	spread = 100;
+	spread = 50;
 }
 
 

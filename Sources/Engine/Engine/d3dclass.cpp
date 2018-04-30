@@ -19,6 +19,7 @@ D3DClass::D3DClass()
 	m_alphaEnableBlendingState = 0;
 	m_alphaDisableBlendingState = 0;
 	m_rasterStateNoCulling = 0;
+	m_alphaBlendState2 = 0;
 }
 
 
@@ -448,6 +449,23 @@ bool D3DClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 		return false;
 	}
 
+	// Create a secondary alpha blend state description.
+	blendStateDescription.RenderTarget[0].BlendEnable = TRUE;
+	blendStateDescription.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	blendStateDescription.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	blendStateDescription.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blendStateDescription.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blendStateDescription.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	blendStateDescription.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendStateDescription.RenderTarget[0].RenderTargetWriteMask = 0x0f;
+
+	// Create the blend state using the description.
+	result = m_device->CreateBlendState(&blendStateDescription, &m_alphaBlendState2);
+	if (FAILED(result))
+	{
+		return false;
+	}
+
     return true;
 }
 
@@ -530,6 +548,12 @@ void D3DClass::Shutdown()
 	{
 		m_swapChain->Release();
 		m_swapChain = 0;
+	}
+
+	if (m_alphaBlendState2)
+	{
+		m_alphaBlendState2->Release();
+		m_alphaBlendState2 = 0;
 	}
 
 	return;
@@ -713,6 +737,23 @@ void D3DClass::ResetViewport()
 {
 	// Set the viewport.
 	m_deviceContext->RSSetViewports(1, &m_viewport);
+
+	return;
+}
+
+void D3DClass::EnableSecondBlendState()
+{
+	float blendFactor[4];
+
+
+	// Setup the blend factor.
+	blendFactor[0] = 0.0f;
+	blendFactor[1] = 0.0f;
+	blendFactor[2] = 0.0f;
+	blendFactor[3] = 0.0f;
+
+	// Turn on the alpha blending.
+	m_deviceContext->OMSetBlendState(m_alphaBlendState2, blendFactor, 0xffffffff);
 
 	return;
 }

@@ -8,7 +8,7 @@
 /////////////
 // GLOBALS //
 /////////////
-const bool FULL_SCREEN = false;
+const bool FULL_SCREEN = true;
 const bool VSYNC_ENABLED = true;
 const float SCREEN_DEPTH = 1000.0f;
 const float SCREEN_NEAR = 0.1f;
@@ -39,10 +39,13 @@ const float SCREEN_NEAR = 0.1f;
 #include "bitmapclass.h"
 #include "skydomeclass.h"
 #include "skydomeshaderclass.h"
+#include "skyplaneclass.h"
+#include "skyplaneshaderclass.h"
 #include "rendertextureclass.h"
 #include "reflectionshaderclass.h"
 #include "waterclass.h"
 #include "watershaderclass.h"
+#include "bleedshaderclass.h"
 
 #ifndef MATH_PI
 #define MATH_PI 3.1415926535897932384626f
@@ -72,7 +75,9 @@ private:
 	bool RaySphereIntersect(D3DXVECTOR3, D3DXVECTOR3, float);
 
 	void RenderRefractionToTexture();
-	void RenderReflectionToTexture();
+	void RenderReflectionToTexture(D3DXMATRIX);
+
+	void RenderSceneToTexture(D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX);
 private:
 	InputClass* m_Input;
 	D3DClass* m_Direct3D;
@@ -98,8 +103,10 @@ private:
 	BitmapClass* m_Mouse;
 	SkyDomeClass* m_skydome;
 	SkyDomeShaderClass* m_skydomeshader;
+	SkyPlaneClass* m_SkyPlane;
+	SkyPlaneShaderClass* m_SkyPlaneShader;
 
-	bool m_renderLine, m_renderMesh, m_renderUI, m_check, m_start;
+	bool m_renderLine, m_renderMesh, m_renderUI, m_check, m_start, bleed;
 	D3DXMATRIX baseViewMatrix;
 	int m_screenWidth, m_screenHeight;
 
@@ -107,6 +114,10 @@ private:
 	ReflectionShaderClass* m_ReflectionShader;
 	WaterClass* m_Water;
 	WaterShaderClass* m_WaterShader;
+
+	BitmapClass* m_BleedObj;
+	RenderTextureClass* m_Bleed;
+	BleedShaderClass* m_bleedshader;
 };
 
 #endif
