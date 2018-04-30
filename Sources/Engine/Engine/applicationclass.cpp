@@ -51,7 +51,7 @@ ApplicationClass::ApplicationClass()
 	m_BleedObj = 0;
 	m_Bleed = 0;
 	m_bleedshader = 0;
-	bleed = true;
+	bleed = false;
 }
 
 
@@ -874,7 +874,6 @@ bool ApplicationClass::Frame()
 	// Do the sky plane frame processing.
 	m_SkyPlane->Frame();
 
-
 	// Render the graphics.
 	result = RenderGraphics();
 	if (!result)
@@ -964,6 +963,13 @@ bool ApplicationClass::HandleInput(float frameTime)
 			m_renderUI = true;
 	}
 
+	if (m_Input->IsSpaceDown()) {
+		if (bleed)
+			bleed = false;
+		else
+			bleed = true;
+	}
+
 	// Get the view point position/rotation.
 	m_Position->GetPosition(posX, posY, posZ);
 	m_Position->GetRotation(rotX, rotY, rotZ);
@@ -1013,7 +1019,12 @@ bool ApplicationClass::RenderGraphics()
 	}
 	else {
 
-		RenderSceneToTexture(worldMatrix, viewMatrix, projectionMatrix, reflectionViewMatrix);
+		// Do the frame input processing.
+		result = HandleInput(m_Timer->GetTime());
+
+
+		RenderSceneToTexture(viewMatrix, projectionMatrix, reflectionViewMatrix);
+
 
 		if (!bleed)
 		{
@@ -1024,9 +1035,8 @@ bool ApplicationClass::RenderGraphics()
 			// Render the reflection of the scene to a texture.
 			RenderReflectionToTexture(viewMatrix);
 
-
 			// Do the frame input processing.
-			result = HandleInput(m_Timer->GetTime());
+			//result = HandleInput(m_Timer->GetTime());
 
 			m_Direct3D->GetWorldMatrix(worldMatrix);
 			// Translate the sky dome to be centered around the camera position.
@@ -1129,7 +1139,6 @@ bool ApplicationClass::RenderGraphics()
 			}
 
 		}
-
 		else if (bleed)
 		{
 			// Turn on the alpha blending before rendering the text.
@@ -1462,7 +1471,7 @@ void ApplicationClass::RenderRefractionToTexture()
 	m_RefractionTexture->ClearRenderTarget(m_Direct3D->GetDeviceContext(), 0.0f, 0.0f, 0.0f, 1.0f);
 
 	// Generate the view matrix based on the camera's position.
-	m_Camera->Render();
+	//m_Camera->Render();
 
 	// Get the matrices from the camera and d3d objects.
 	m_Direct3D->GetWorldMatrix(worldMatrix);
@@ -1561,9 +1570,9 @@ void ApplicationClass::RenderReflectionToTexture(D3DXMATRIX viewMatrix)
 	return;
 }
 
-void ApplicationClass::RenderSceneToTexture(D3DXMATRIX worldMatrix,D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix,D3DXMATRIX reflectionViewMatrix)
+void ApplicationClass::RenderSceneToTexture(D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix,D3DXMATRIX reflectionViewMatrix)
 {
-	D3DXMATRIX vehicleMatrix;
+	D3DXMATRIX vehicleMatrix, worldMatrix;
 	D3DXVECTOR3 cameraPosition;
 	bool result;
 

@@ -77,7 +77,7 @@ private:
 	void RenderRefractionToTexture();
 	void RenderReflectionToTexture(D3DXMATRIX);
 
-	void RenderSceneToTexture(D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX);
+	void RenderSceneToTexture(D3DXMATRIX, D3DXMATRIX, D3DXMATRIX);
 private:
 	InputClass* m_Input;
 	D3DClass* m_Direct3D;

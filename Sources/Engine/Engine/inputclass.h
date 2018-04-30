@@ -53,6 +53,7 @@ public:
 	bool IsIDown();
 	bool IsODown();
 	bool IsUDown();
+	bool IsSpaceDown();
 
 	bool IsLeftMouseButtonDown();
 private:
