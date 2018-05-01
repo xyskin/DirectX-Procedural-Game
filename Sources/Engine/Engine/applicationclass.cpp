@@ -281,12 +281,14 @@ bool ApplicationClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidt
 	}
 
 	m_ColorShader = new ColorShaderClass;
-	if (!m_ColorShader) {
+	if (!m_ColorShader) 
+	{
 		return false;
 	}
 
 	result = m_ColorShader->Initialize(m_Direct3D->GetDevice(), hwnd);
-	if (!result) {
+	if (!result) 
+	{
 		MessageBox(hwnd, L"Could not initialize the color shader object.", L"Error", MB_OK);
 		return false;
 	}
