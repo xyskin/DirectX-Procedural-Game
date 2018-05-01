@@ -1392,23 +1392,25 @@ void ApplicationClass::TestIntersection(int mouseX, int mouseY)
 	// Get the origin of the picking ray which is the position of the camera.
 	origin = m_Camera->GetPosition();
 
-	// Get the world matrix and translate to the location of the sphere.
-	m_Direct3D->GetWorldMatrix(worldMatrix);
-	D3DXMatrixTranslation(&translateMatrix, 0.0f, 0.0f, 0.0f);
-	D3DXMatrixMultiply(&worldMatrix, &worldMatrix, &translateMatrix);
+	//// Get the world matrix and translate to the location of the sphere.
+	//m_Direct3D->GetWorldMatrix(worldMatrix);
+	//D3DXMatrixTranslation(&translateMatrix, 0.0f, 0.0f, 0.0f);
+	//D3DXMatrixMultiply(&worldMatrix, &worldMatrix, &translateMatrix);
+	////worldMatrix *= translateMatrix;
+	//// Now get the inverse of the translated world matrix.
+	//D3DXMatrixInverse(&inverseWorldMatrix, NULL, &worldMatrix);
 
-	// Now get the inverse of the translated world matrix.
-	D3DXMatrixInverse(&inverseWorldMatrix, NULL, &worldMatrix);
+	//// Now transform the ray origin and the ray direction from view space to world space.
+	//D3DXVec3TransformCoord(&rayOrigin, &origin, &inverseWorldMatrix);
+	//D3DXVec3TransformNormal(&rayDirection, &direction, &inverseWorldMatrix);
 
-	// Now transform the ray origin and the ray direction from view space to world space.
-	D3DXVec3TransformCoord(&rayOrigin, &origin, &inverseWorldMatrix);
-	D3DXVec3TransformNormal(&rayDirection, &direction, &inverseWorldMatrix);
+	//// Normalize the ray direction.
+	//D3DXVec3Normalize(&rayDirection, &rayDirection);
 
-	// Normalize the ray direction.
-	D3DXVec3Normalize(&rayDirection, &rayDirection);
+	D3DXVec3Normalize(&direction, &direction);
 
 	// Now perform the ray-sphere intersection test.
-	intersect = RaySphereIntersect(rayOrigin, rayDirection, 1.0f);
+	intersect = RaySphereIntersect(origin, direction, 1.0f);
 
 	if (intersect == true)
 	{
