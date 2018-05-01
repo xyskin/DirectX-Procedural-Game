@@ -46,6 +46,9 @@ const float SCREEN_NEAR = 0.1f;
 #include "waterclass.h"
 #include "watershaderclass.h"
 #include "bleedshaderclass.h"
+#include "horizontalblurshaderclass.h"
+#include "verticalblurshaderclass.h"
+#include "orthowindowclass.h"
 
 #ifndef MATH_PI
 #define MATH_PI 3.1415926535897932384626f
@@ -78,6 +81,11 @@ private:
 	void RenderReflectionToTexture(D3DXMATRIX);
 
 	void RenderSceneToTexture(D3DXMATRIX, D3DXMATRIX, D3DXMATRIX);
+	void DownSampleTexture();
+	void RenderHorizontalBlurToTexture();
+	void RenderVerticalBlurToTexture();
+	void UpSampleTexture();
+	
 private:
 	InputClass* m_Input;
 	D3DClass* m_Direct3D;
@@ -106,7 +114,7 @@ private:
 	SkyPlaneClass* m_SkyPlane;
 	SkyPlaneShaderClass* m_SkyPlaneShader;
 
-	bool m_renderLine, m_renderMesh, m_renderUI, m_check, m_start, bleed;
+	bool m_renderLine, m_renderMesh, m_renderUI, m_check, m_start;
 	D3DXMATRIX baseViewMatrix;
 	int m_screenWidth, m_screenHeight;
 
@@ -116,8 +124,16 @@ private:
 	WaterShaderClass* m_WaterShader;
 
 	BitmapClass* m_BleedObj;
-	RenderTextureClass* m_Bleed;
+	RenderTextureClass* m_RenderScreenTexture, *m_DownSampleTexure, *m_HorizontalBlurTexture, *m_VerticalBlurTexture, *m_UpSampleTexure;
 	BleedShaderClass* m_bleedshader;
+	HorizontalBlurShaderClass* m_HorizontalBlurShader;
+	VerticalBlurShaderClass* m_VerticalBlurShader;
+
+	OrthoWindowClass *m_SmallWindow, *m_FullScreenWindow;
+	enum RenderMode
+	{
+		Default, Grey, Blur
+	} mode;
 };
 
 #endif

@@ -49,9 +49,19 @@ ApplicationClass::ApplicationClass()
 	m_WaterShader = 0;
 
 	m_BleedObj = 0;
-	m_Bleed = 0;
+	m_RenderScreenTexture = 0;
 	m_bleedshader = 0;
-	bleed = false;
+	//bleed = false;
+	mode = Default;
+
+	m_HorizontalBlurShader = 0;
+	m_VerticalBlurShader = 0;
+	m_DownSampleTexure = 0;
+	m_HorizontalBlurTexture = 0;
+	m_VerticalBlurTexture = 0;
+	m_UpSampleTexure = 0;
+	m_SmallWindow = 0;
+	m_FullScreenWindow = 0;
 }
 
 
@@ -69,13 +79,15 @@ bool ApplicationClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidt
 {
 	bool result;
 	float cameraX, cameraY, cameraZ;
-
+	int downSampleWidth, downSampleHeight;
 	char videoCard[128];
 	int videoMemory;
 	D3DXVECTOR3 vehiclePosition;
 	int terrainWidth, terrainHeight;
 	m_screenWidth = screenWidth;
 	m_screenHeight = screenHeight;
+	downSampleHeight = screenHeight / 2.0f;
+	downSampleWidth = screenWidth / 2.0f;
 	// Create the input object.  The input object will be used to handle reading the keyboard and mouse input from the user.
 	m_Input = new InputClass;
 	if (!m_Input)
@@ -543,13 +555,13 @@ bool ApplicationClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidt
 		return false;
 	}
 
-	m_Bleed = new RenderTextureClass;
-	if (!m_Bleed)
+	m_RenderScreenTexture = new RenderTextureClass;
+	if (!m_RenderScreenTexture)
 	{
 		return false;
 	}
 
-	result = m_Bleed->Initialize(m_Direct3D->GetDevice(), screenWidth, screenHeight, SCREEN_DEPTH, SCREEN_NEAR);
+	result = m_RenderScreenTexture->Initialize(m_Direct3D->GetDevice(), screenWidth, screenHeight, SCREEN_DEPTH, SCREEN_NEAR);
 	if (!result)
 	{
 		return false;
@@ -576,6 +588,126 @@ bool ApplicationClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidt
 	result = m_bleedshader->Initialize(m_Direct3D->GetDevice(), hwnd);
 	if (!result)
 	{
+		return false;
+	}
+
+	// Create the horizontal blur shader object.
+	m_HorizontalBlurShader = new HorizontalBlurShaderClass;
+	if (!m_HorizontalBlurShader)
+	{
+		return false;
+	}
+
+	// Initialize the horizontal blur shader object.
+	result = m_HorizontalBlurShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the horizontal blur shader object.", L"Error", MB_OK);
+		return false;
+	}
+	
+		// Create the vertical blur shader object.
+		m_VerticalBlurShader = new VerticalBlurShaderClass;
+	if (!m_VerticalBlurShader)
+	{
+		return false;
+	}
+
+	// Initialize the vertical blur shader object.
+	result = m_VerticalBlurShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the vertical blur shader object.", L"Error", MB_OK);
+		return false;
+	}
+	
+
+		// Create the down sample render to texture object.
+		m_DownSampleTexure = new RenderTextureClass;
+	if (!m_DownSampleTexure)
+	{
+		return false;
+	}
+
+	// Initialize the down sample render to texture object.
+	result = m_DownSampleTexure->Initialize(m_Direct3D->GetDevice(), downSampleWidth, downSampleHeight, SCREEN_DEPTH, SCREEN_NEAR);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the down sample render to texture object.", L"Error", MB_OK);
+		return false;
+	}
+	
+		// Create the horizontal blur render to texture object.
+		m_HorizontalBlurTexture = new RenderTextureClass;
+	if (!m_HorizontalBlurTexture)
+	{
+		return false;
+	}
+
+	// Initialize the horizontal blur render to texture object.
+	result = m_HorizontalBlurTexture->Initialize(m_Direct3D->GetDevice(), downSampleWidth, downSampleHeight, SCREEN_DEPTH, SCREEN_NEAR);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the horizontal blur render to texture object.", L"Error", MB_OK);
+		return false;
+	}
+		// Create the vertical blur render to texture object.
+		m_VerticalBlurTexture = new RenderTextureClass;
+	if (!m_VerticalBlurTexture)
+	{
+		return false;
+	}
+
+	// Initialize the vertical blur render to texture object.
+	result = m_VerticalBlurTexture->Initialize(m_Direct3D->GetDevice(), downSampleWidth, downSampleHeight, SCREEN_DEPTH, SCREEN_NEAR);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the vertical blur render to texture object.", L"Error", MB_OK);
+		return false;
+	}
+	
+		// Create the up sample render to texture object.
+		m_UpSampleTexure = new RenderTextureClass;
+	if (!m_UpSampleTexure)
+	{
+		return false;
+	}
+
+	// Initialize the up sample render to texture object.
+	result = m_UpSampleTexure->Initialize(m_Direct3D->GetDevice(), screenWidth, screenHeight, SCREEN_DEPTH, SCREEN_NEAR);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the up sample render to texture object.", L"Error", MB_OK);
+		return false;
+	}
+	
+		// Create the small ortho window object.
+		m_SmallWindow = new OrthoWindowClass;
+	if (!m_SmallWindow)
+	{
+		return false;
+	}
+
+	// Initialize the small ortho window object.
+	result = m_SmallWindow->Initialize(m_Direct3D->GetDevice(), downSampleWidth, downSampleHeight);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the small ortho window object.", L"Error", MB_OK);
+		return false;
+	}
+	
+		// Create the full screen ortho window object.
+		m_FullScreenWindow = new OrthoWindowClass;
+	if (!m_FullScreenWindow)
+	{
+		return false;
+	}
+
+	// Initialize the full screen ortho window object.
+	result = m_FullScreenWindow->Initialize(m_Direct3D->GetDevice(), screenWidth, screenHeight);
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the full screen ortho window object.", L"Error", MB_OK);
 		return false;
 	}
 
@@ -830,6 +962,70 @@ void ApplicationClass::Shutdown()
 		m_RefractionTexture = 0;
 	}
 
+	// Release the full screen ortho window object.
+	if (m_FullScreenWindow)
+	{
+		m_FullScreenWindow->Shutdown();
+		delete m_FullScreenWindow;
+		m_FullScreenWindow = 0;
+	}
+
+	// Release the small ortho window object.
+	if (m_SmallWindow)
+	{
+		m_SmallWindow->Shutdown();
+		delete m_SmallWindow;
+		m_SmallWindow = 0;
+	}
+
+	// Release the up sample render to texture object.
+	if (m_UpSampleTexure)
+	{
+		m_UpSampleTexure->Shutdown();
+		delete m_UpSampleTexure;
+		m_UpSampleTexure = 0;
+	}
+
+	// Release the vertical blur render to texture object.
+	if (m_VerticalBlurTexture)
+	{
+		m_VerticalBlurTexture->Shutdown();
+		delete m_VerticalBlurTexture;
+		m_VerticalBlurTexture = 0;
+	}
+
+	// Release the horizontal blur render to texture object.
+	if (m_HorizontalBlurTexture)
+	{
+		m_HorizontalBlurTexture->Shutdown();
+		delete m_HorizontalBlurTexture;
+		m_HorizontalBlurTexture = 0;
+	}
+
+	// Release the down sample render to texture object.
+	if (m_DownSampleTexure)
+	{
+		m_DownSampleTexure->Shutdown();
+		delete m_DownSampleTexure;
+		m_DownSampleTexure = 0;
+	}
+
+	// Release the vertical blur shader object.
+	if (m_VerticalBlurShader)
+	{
+		m_VerticalBlurShader->Shutdown();
+		delete m_VerticalBlurShader;
+		m_VerticalBlurShader = 0;
+	}
+
+	// Release the horizontal blur shader object.
+	if (m_HorizontalBlurShader)
+	{
+		m_HorizontalBlurShader->Shutdown();
+		delete m_HorizontalBlurShader;
+		m_HorizontalBlurShader = 0;
+	}
+
 	return;
 }
 
@@ -966,10 +1162,12 @@ bool ApplicationClass::HandleInput(float frameTime)
 	}
 
 	if (m_Input->IsSpaceDown()) {
-		if (bleed)
-			bleed = false;
-		else
-			bleed = true;
+		if (mode == Default)
+			mode = Grey;
+		else if (mode == Grey)
+			mode = Blur;
+		else if (mode == Blur)
+			mode = Default;
 	}
 
 	// Get the view point position/rotation.
@@ -1026,9 +1224,12 @@ bool ApplicationClass::RenderGraphics()
 
 
 		RenderSceneToTexture(viewMatrix, projectionMatrix, reflectionViewMatrix);
+		DownSampleTexture();
+		RenderHorizontalBlurToTexture();
+		RenderVerticalBlurToTexture();
+		UpSampleTexture();
 
-
-		if (!bleed)
+		if (mode==Default)
 		{
 
 			// Render the refraction of the scene to a texture.
@@ -1141,7 +1342,7 @@ bool ApplicationClass::RenderGraphics()
 			}
 
 		}
-		else if (bleed)
+		else if (mode==Grey)
 		{
 			// Turn on the alpha blending before rendering the text.
 			m_Direct3D->TurnOnAlphaBlending();
@@ -1154,7 +1355,31 @@ bool ApplicationClass::RenderGraphics()
 			}
 
 			result = m_bleedshader->Render(m_Direct3D->GetDeviceContext(), m_BleedObj->GetIndexCount(),
-				worldMatrix, baseViewMatrix, orthoMatrix, m_Bleed->GetShaderResourceView());
+				worldMatrix, baseViewMatrix, orthoMatrix, m_RenderScreenTexture->GetShaderResourceView());
+			if (!result)
+			{
+				return false;
+			}
+
+			// Turn off alpha blending after rendering the text.
+			m_Direct3D->TurnOffAlphaBlending();
+
+			// Turn the Z buffer back on now that all 2D rendering has completed.
+			m_Direct3D->TurnZBufferOn();
+		}
+		else if (mode == Blur)
+		{
+			m_Direct3D->TurnOnAlphaBlending();
+
+			// Render the mouse cursor with the texture shader.
+			result = m_BleedObj->Render(m_Direct3D->GetDeviceContext(), 0, 0);
+			if (!result)
+			{
+				return false;
+			}
+
+			result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(), m_BleedObj->GetIndexCount(),
+				worldMatrix, baseViewMatrix, orthoMatrix, m_UpSampleTexure->GetShaderResourceView());
 			if (!result)
 			{
 				return false;
@@ -1572,10 +1797,10 @@ void ApplicationClass::RenderSceneToTexture(D3DXMATRIX viewMatrix, D3DXMATRIX pr
 	bool result;
 
 	// Set the render target to be the reflection render to texture.
-	m_Bleed->SetRenderTarget(m_Direct3D->GetDeviceContext());
+	m_RenderScreenTexture->SetRenderTarget(m_Direct3D->GetDeviceContext());
 
 	// Clear the reflection render to texture.
-	m_Bleed->ClearRenderTarget(m_Direct3D->GetDeviceContext(), 0.0f, 0.0f, 0.0f, 1.0f);
+	m_RenderScreenTexture->ClearRenderTarget(m_Direct3D->GetDeviceContext(), 0.0f, 0.0f, 0.0f, 1.0f);
 
 	m_Direct3D->GetWorldMatrix(worldMatrix);
 	// Translate the sky dome to be centered around the camera position.
@@ -1651,6 +1876,206 @@ void ApplicationClass::RenderSceneToTexture(D3DXMATRIX viewMatrix, D3DXMATRIX pr
 		m_Direct3D->DisableWireframe();
 	}
 
+
+	// Reset the render target back to the original back buffer and not the render to texture anymore.
+	m_Direct3D->SetBackBufferRenderTarget();
+
+	// Reset the viewport back to the original.
+	m_Direct3D->ResetViewport();
+
+	return;
+}
+
+void ApplicationClass::DownSampleTexture()
+{
+	D3DXMATRIX worldMatrix, viewMatrix, orthoMatrix;
+	bool result;
+
+
+	// Set the render target to be the render to texture.
+	m_DownSampleTexure->SetRenderTarget(m_Direct3D->GetDeviceContext());
+
+	// Clear the render to texture.
+	m_DownSampleTexure->ClearRenderTarget(m_Direct3D->GetDeviceContext(), 0.0f, 1.0f, 0.0f, 1.0f);
+
+	// Generate the view matrix based on the camera's position.
+	//m_Camera->Render();
+
+	// Get the world and view matrices from the camera and d3d objects.
+	m_Camera->GetViewMatrix(viewMatrix);
+	m_Direct3D->GetWorldMatrix(worldMatrix);
+
+	// Get the ortho matrix from the render to texture since texture has different dimensions being that it is smaller.
+	m_DownSampleTexure->GetOrthoMatrix(orthoMatrix);
+
+	// Turn off the Z buffer to begin all 2D rendering.
+	m_Direct3D->TurnZBufferOff();
+
+	// Put the small ortho window vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	m_SmallWindow->Render(m_Direct3D->GetDeviceContext());
+
+	// Render the small ortho window using the texture shader and the render to texture of the scene as the texture resource.
+	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(), m_SmallWindow->GetIndexCount(), worldMatrix, baseViewMatrix, orthoMatrix,
+		m_RenderScreenTexture->GetShaderResourceView());
+	if (!result)
+	{
+		return;
+	}
+
+	// Turn the Z buffer back on now that all 2D rendering has completed.
+	m_Direct3D->TurnZBufferOn();
+
+	// Reset the render target back to the original back buffer and not the render to texture anymore.
+	m_Direct3D->SetBackBufferRenderTarget();
+
+	// Reset the viewport back to the original.
+	m_Direct3D->ResetViewport();
+
+	return;
+}
+
+void ApplicationClass::RenderHorizontalBlurToTexture()
+{
+	D3DXMATRIX worldMatrix, viewMatrix, orthoMatrix;
+	float screenSizeX;
+	bool result;
+
+
+	// Store the screen width in a float that will be used in the horizontal blur shader.
+	screenSizeX = m_screenWidth / 2.0f;
+
+	// Set the render target to be the render to texture.
+	m_HorizontalBlurTexture->SetRenderTarget(m_Direct3D->GetDeviceContext());
+
+	// Clear the render to texture.
+	m_HorizontalBlurTexture->ClearRenderTarget(m_Direct3D->GetDeviceContext(), 0.0f, 0.0f, 0.0f, 1.0f);
+
+	// Generate the view matrix based on the camera's position.
+	//m_Camera->Render();
+
+	// Get the world and view matrices from the camera and d3d objects.
+	m_Camera->GetViewMatrix(viewMatrix);
+	m_Direct3D->GetWorldMatrix(worldMatrix);
+
+	// Get the ortho matrix from the render to texture since texture has different dimensions.
+	m_HorizontalBlurTexture->GetOrthoMatrix(orthoMatrix);
+
+	// Turn off the Z buffer to begin all 2D rendering.
+	m_Direct3D->TurnZBufferOff();
+
+	// Put the small ortho window vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	m_SmallWindow->Render(m_Direct3D->GetDeviceContext());
+
+	// Render the small ortho window using the horizontal blur shader and the down sampled render to texture resource.
+	result = m_HorizontalBlurShader->Render(m_Direct3D->GetDeviceContext(), m_SmallWindow->GetIndexCount(), worldMatrix, baseViewMatrix, orthoMatrix,
+		m_DownSampleTexure->GetShaderResourceView(), screenSizeX);
+	if (!result)
+	{
+		return;
+	}
+
+	// Turn the Z buffer back on now that all 2D rendering has completed.
+	m_Direct3D->TurnZBufferOn();
+
+	// Reset the render target back to the original back buffer and not the render to texture anymore.
+	m_Direct3D->SetBackBufferRenderTarget();
+
+	// Reset the viewport back to the original.
+	m_Direct3D->ResetViewport();
+
+	return;
+}
+
+void ApplicationClass::RenderVerticalBlurToTexture()
+{
+	D3DXMATRIX worldMatrix, viewMatrix, orthoMatrix;
+	float screenSizeY;
+	bool result;
+
+
+	// Store the screen height in a float that will be used in the vertical blur shader.
+	screenSizeY = m_screenHeight/2.0f;
+
+	// Set the render target to be the render to texture.
+	m_VerticalBlurTexture->SetRenderTarget(m_Direct3D->GetDeviceContext());
+
+	// Clear the render to texture.
+	m_VerticalBlurTexture->ClearRenderTarget(m_Direct3D->GetDeviceContext(), 0.0f, 0.0f, 0.0f, 1.0f);
+
+	// Generate the view matrix based on the camera's position.
+	//m_Camera->Render();
+
+	// Get the world and view matrices from the camera and d3d objects.
+	m_Camera->GetViewMatrix(viewMatrix);
+	m_Direct3D->GetWorldMatrix(worldMatrix);
+
+	// Get the ortho matrix from the render to texture since texture has different dimensions.
+	m_VerticalBlurTexture->GetOrthoMatrix(orthoMatrix);
+
+	// Turn off the Z buffer to begin all 2D rendering.
+	m_Direct3D->TurnZBufferOff();
+
+	// Put the small ortho window vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	m_SmallWindow->Render(m_Direct3D->GetDeviceContext());
+
+	// Render the small ortho window using the vertical blur shader and the horizontal blurred render to texture resource.
+	result = m_VerticalBlurShader->Render(m_Direct3D->GetDeviceContext(), m_SmallWindow->GetIndexCount(), worldMatrix, baseViewMatrix, orthoMatrix,
+		m_HorizontalBlurTexture->GetShaderResourceView(), screenSizeY);
+	if (!result)
+	{
+		return;
+	}
+
+	// Turn the Z buffer back on now that all 2D rendering has completed.
+	m_Direct3D->TurnZBufferOn();
+
+	// Reset the render target back to the original back buffer and not the render to texture anymore.
+	m_Direct3D->SetBackBufferRenderTarget();
+
+	// Reset the viewport back to the original.
+	m_Direct3D->ResetViewport();
+
+	return;
+}
+
+void ApplicationClass::UpSampleTexture()
+{
+	D3DXMATRIX worldMatrix, viewMatrix, orthoMatrix;
+	bool result;
+
+
+	// Set the render target to be the render to texture.
+	m_UpSampleTexure->SetRenderTarget(m_Direct3D->GetDeviceContext());
+
+	// Clear the render to texture.
+	m_UpSampleTexure->ClearRenderTarget(m_Direct3D->GetDeviceContext(), 0.0f, 0.0f, 0.0f, 1.0f);
+
+	// Generate the view matrix based on the camera's position.
+	//m_Camera->Render();
+
+	// Get the world and view matrices from the camera and d3d objects.
+	m_Camera->GetViewMatrix(viewMatrix);
+	m_Direct3D->GetWorldMatrix(worldMatrix);
+
+	// Get the ortho matrix from the render to texture since texture has different dimensions.
+	m_UpSampleTexure->GetOrthoMatrix(orthoMatrix);
+
+	// Turn off the Z buffer to begin all 2D rendering.
+	m_Direct3D->TurnZBufferOff();
+
+	// Put the full screen ortho window vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	m_FullScreenWindow->Render(m_Direct3D->GetDeviceContext());
+
+	// Render the full screen ortho window using the texture shader and the small sized final blurred render to texture resource.
+	result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(), m_FullScreenWindow->GetIndexCount(), worldMatrix, baseViewMatrix, orthoMatrix,
+		m_VerticalBlurTexture->GetShaderResourceView());
+	if (!result)
+	{
+		return;
+	}
+
+	// Turn the Z buffer back on now that all 2D rendering has completed.
+	m_Direct3D->TurnZBufferOn();
 
 	// Reset the render target back to the original back buffer and not the render to texture anymore.
 	m_Direct3D->SetBackBufferRenderTarget();
