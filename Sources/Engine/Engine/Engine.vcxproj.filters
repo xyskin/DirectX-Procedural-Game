@@ -117,6 +117,15 @@
     <ClCompile Include="bleedshaderclass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="horizontalblurshaderclass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="orthowindowclass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="verticalblurshaderclass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="applicationclass.h">
@@ -218,6 +227,15 @@
     <ClInclude Include="bleedshaderclass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="verticalblurshaderclass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="horizontalblurshaderclass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="orthowindowclass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="font.ps">
@@ -278,6 +296,18 @@
       <Filter>Shader Files</Filter>
     </None>
     <None Include="Bleed.vs">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="verticalblur.ps">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="verticalblur.vs">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="horizontalblur.ps">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="horizontalblur.vs">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>

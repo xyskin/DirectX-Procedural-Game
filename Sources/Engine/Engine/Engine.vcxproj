@@ -90,11 +90,13 @@
     <ClCompile Include="fontshaderclass.cpp" />
     <ClCompile Include="fpsclass.cpp" />
     <ClCompile Include="frustumclass.cpp" />
+    <ClCompile Include="horizontalblurshaderclass.cpp" />
     <ClCompile Include="inputclass.cpp" />
     <ClCompile Include="lightclass.cpp" />
     <ClCompile Include="lightshaderclass.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="minimapclass.cpp" />
+    <ClCompile Include="orthowindowclass.cpp" />
     <ClCompile Include="positionclass.cpp" />
     <ClCompile Include="quadtreeclass.cpp" />
     <ClCompile Include="reflectionshaderclass.cpp" />
@@ -111,6 +113,7 @@
     <ClCompile Include="textureshaderclass.cpp" />
     <ClCompile Include="timerclass.cpp" />
     <ClCompile Include="vehicleclass.cpp" />
+    <ClCompile Include="verticalblurshaderclass.cpp" />
     <ClCompile Include="waterclass.cpp" />
     <ClCompile Include="watershaderclass.cpp" />
   </ItemGroup>
@@ -126,10 +129,12 @@
     <ClInclude Include="fontshaderclass.h" />
     <ClInclude Include="fpsclass.h" />
     <ClInclude Include="frustumclass.h" />
+    <ClInclude Include="horizontalblurshaderclass.h" />
     <ClInclude Include="inputclass.h" />
     <ClInclude Include="lightclass.h" />
     <ClInclude Include="lightshaderclass.h" />
     <ClInclude Include="minimapclass.h" />
+    <ClInclude Include="orthowindowclass.h" />
     <ClInclude Include="positionclass.h" />
     <ClInclude Include="quadtreeclass.h" />
     <ClInclude Include="reflectionshaderclass.h" />
@@ -146,6 +151,7 @@
     <ClInclude Include="textureshaderclass.h" />
     <ClInclude Include="timerclass.h" />
     <ClInclude Include="vehicleclass.h" />
+    <ClInclude Include="verticalblurshaderclass.h" />
     <ClInclude Include="waterclass.h" />
     <ClInclude Include="watershaderclass.h" />
   </ItemGroup>
@@ -156,6 +162,8 @@
     <None Include="color.vs" />
     <None Include="font.ps" />
     <None Include="font.vs" />
+    <None Include="horizontalblur.ps" />
+    <None Include="horizontalblur.vs" />
     <None Include="light.ps" />
     <None Include="light.vs" />
     <None Include="reflection.ps" />
@@ -168,6 +176,8 @@
     <None Include="terrain.vs" />
     <None Include="texture.ps" />
     <None Include="texture.vs" />
+    <None Include="verticalblur.ps" />
+    <None Include="verticalblur.vs" />
     <None Include="water.ps" />
     <None Include="water.vs" />
   </ItemGroup>

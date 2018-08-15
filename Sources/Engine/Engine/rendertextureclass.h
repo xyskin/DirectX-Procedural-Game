@@ -40,7 +40,6 @@ private:
 	D3D11_VIEWPORT m_viewport;
 	D3DXMATRIX m_projectionMatrix;
 	D3DXMATRIX m_orthoMatrix;
-
 };
 
 #endif
